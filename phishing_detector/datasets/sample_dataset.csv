@@ -1,0 +1,11 @@
+url,label
+https://google.com,legitimate
+https://amazon.com/login,legitimate
+https://github.com,legitimate
+http://192.168.1.1/login-amazon.html,phishing
+http://verify-your-paypal-account.com,phishing
+http://bit.ly/3xJkLpQ,phishing
+https://microsoft.com,legitimate
+http://secure-bank-access.xyz/index.php,phishing
+https://apple.com,legitimate
+http://update-your-password-now.top,phishing

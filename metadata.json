@@ -1,0 +1,8 @@
+{
+  "name": "Phishing Detector AI",
+  "description": "An advanced phishing detection suite featuring URL analysis, ML-based detection, QR code scanning, and screenshot analysis.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": []
+}

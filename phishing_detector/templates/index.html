@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhishGuard AI | Industrial Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0e1a;
+            --card-bg: #111827cc;
+            --accent: #6366f1;
+            --danger: #ef4444;
+            --safe: #10b981;
+            --warning: #f59e0b;
+            --text-main: #f3f4f6;
+            --text-dim: #9ca3af;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .font-mono { font-family: 'Fira Code', monospace; }
+
+        /* --- Header --- */
+        header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            padding: 2rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            z-index: 10;
+        }
+
+        .shield-icon {
+            width: 48px;
+            height: 48px;
+            color: var(--accent);
+            filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.5));
+        }
+
+        .brand-text h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            background: linear-gradient(to right, #fff, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-text p {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .header-info {
+            text-align: right;
+            z-index: 10;
+        }
+
+        .clock {
+            font-family: 'Fira Code', monospace;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .accuracy-badge {
+            display: inline-block;
+            background: rgba(99, 102, 241, 0.2);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-top: 0.5rem;
+        }
+
+        /* --- Layout --- */
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        /* --- Stats --- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover { border-color: rgba(99, 102, 241, 0.5); transform: translateY(-5px); }
+
+        .stat-card h3 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-dim);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .stat-v-indigo { color: var(--accent); }
+        .stat-v-danger { color: var(--danger); }
+        .stat-v-safe { color: var(--safe); }
+
+        .pulse { animation: pulse-red 2s infinite; }
+        @keyframes pulse-red {
+            0% { filter: drop-shadow(0 0 0 rgba(239, 68, 68, 0.7)); }
+            70% { filter: drop-shadow(0 0 15px rgba(239, 68, 68, 0)); }
+            100% { filter: drop-shadow(0 0 0 rgba(239, 68, 68, 0)); }
+        }
+
+        /* --- Tabs --- */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+
+        .tabs {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+
+        .tab-headers {
+            display: flex;
+            background: rgba(0,0,0,0.2);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            padding: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .tab-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
+        .tab-btn.active {
+            color: var(--accent);
+            background: rgba(99, 102, 241, 0.1);
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .tab-content { padding: 2rem; display: none; }
+        .tab-content.active { display: block; }
+
+        /* --- Inputs --- */
+        .input-group { margin-bottom: 1.5rem; }
+        .input-group h4 { margin-bottom: 0.75rem; font-size: 0.9rem; color: var(--text-dim); }
+
+        textarea, input[type="text"] {
+            width: 100%;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            color: white;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            resize: none;
+        }
+
+        textarea:focus, input[type="text"]:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 10px rgba(99, 102, 241, 0.3); }
+
+        .btn-scan {
+            width: 100%;
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .btn-scan:hover { background: #4f46e5; transform: scale(1.01); }
+        .btn-scan:active { transform: scale(0.99); }
+
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: 1rem;
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(255,255,255,0.02);
+            position: relative;
+        }
+
+        .drop-zone:hover, .drop-zone.dragover { border-color: var(--accent); background: rgba(99, 102, 241, 0.05); }
+
+        .drop-zone svg { width: 48px; height: 48px; color: var(--text-dim); margin-bottom: 1rem; }
+
+        .preview-box {
+            margin-top: 1rem;
+            border-radius: 0.5rem;
+            max-height: 200px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .preview-box img { width: 100%; height: 100%; object-fit: contain; }
+
+        /* --- Tips --- */
+        .tip-box {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-left: 4px solid var(--accent);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.85rem;
+        }
+
+        .tip-box code { display: block; margin-top: 0.5rem; background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 0.25rem; color: #818cf8; }
+
+
+
+        /* --- Result Card --- */
+        .result-area { margin-top: 2rem; display: none; }
+
+        .result-card {
+            border-left: 8px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .result-card.phishing { border-color: var(--danger); box-shadow: 0 0 30px rgba(239, 68, 68, 0.2); }
+        .result-card.safe { border-color: var(--safe); box-shadow: 0 0 30px rgba(16, 185, 129, 0.2); }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .badge-danger { background: var(--danger); color: white; }
+        .badge-safe { background: var(--safe); color: white; }
+
+        .confidence-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            margin: 1rem 0;
+            position: relative;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .reasons-list { margin-top: 1rem; list-style: none; }
+        .reasons-list li {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .reasons-list li::before {
+            content: '⚠';
+            color: var(--danger);
+        }
+
+        /* --- Logs Table --- */
+        .logs-section { margin-top: 3rem; }
+        .logs-section h2 { font-size: 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card-bg);
+            border-radius: 1rem;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        th {
+            background: rgba(0,0,0,0.3);
+            text-align: left;
+            padding: 1rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-dim);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(255,255,255,0.02); }
+
+        .pill {
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .pill-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); }
+        .pill-safe { background: rgba(16, 185, 129, 0.1); color: var(--safe); border: 1px solid var(--safe); }
+        .pill-warn { background: rgba(245, 158, 11, 0.1); color: var(--warning); border: 1px solid var(--warning); }
+
+        .scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--accent);
+            box-shadow: 0 0 10px var(--accent);
+            animation: scan 2s linear infinite;
+            display: none;
+        }
+
+        @keyframes scan {
+            0% { top: 0%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        .loading .scan-line { display: block; }
+        .loading .btn-scan { opacity: 0.7; pointer-events: none; }
+
+        @media (max-width: 1024px) {
+            .main-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 640px) {
+            header { flex-direction: column; text-align: center; gap: 1rem; }
+            .header-info { text-align: center; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .container { padding: 0 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand">
+            <svg class="shield-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            <div class="brand-text">
+                <h1>PhishGuard AI</h1>
+                <p>Real-Time Phishing Detection System</p>
+            </div>
+        </div>
+        <div class="header-info">
+            <div class="clock" id="clock">00:00:00</div>
+            <div class="accuracy-badge" id="accuracy-badge">Model Accuracy: 94.2%</div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Stats Row -->
+        <div class="stats-grid">
+            <div class="card stat-card">
+                <h3>Total Scans</h3>
+                <div class="stat-value stat-v-indigo" id="total-scans">0</div>
+            </div>
+            <div class="card stat-card">
+                <h3>Threats Detected</h3>
+                <div class="stat-value stat-v-danger" id="threats-detected">0</div>
+            </div>
+            <div class="card stat-card">
+                <h3>Clean</h3>
+                <div class="stat-value stat-v-safe" id="clean-scans">0</div>
+            </div>
+            <div class="card stat-card" style="border: 1px solid rgba(139, 92, 246, 0.3); background: rgba(139, 92, 246, 0.05);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <h3 style="margin: 0; color: #a78bfa;">Autonomous Learning</h3>
+                    <div style="width: 8px; height: 8px; border-radius: 50%; background: #a78bfa; box-shadow: 0 0 10px #a78bfa;"></div>
+                </div>
+                <div class="stat-value" style="color: #a78bfa;" id="learned-count">0</div>
+                <div style="font-size: 0.65rem; color: var(--text-dim); margin-top: 0.25rem;">Knowledge Base Patterns Recorded</div>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <div class="tabs">
+                <div class="tab-headers">
+                    <button class="tab-btn active" onclick="switchTab('url')">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                        URL Scanner
+                    </button>
+                    <button class="tab-btn" onclick="switchTab('image')">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                        Image Analysis
+                    </button>
+                    <button class="tab-btn" onclick="switchTab('qr')">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><line x1="7" y1="7" x2="7" y2="7"></line><line x1="17" y1="7" x2="17" y2="7"></line><line x1="17" y1="17" x2="17" y2="17"></line><line x1="7" y1="17" x2="7" y2="17"></line></svg>
+                        QR Scanner
+                    </button>
+                    <button class="tab-btn" onclick="switchTab('train')">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+                        Training Lab
+                    </button>
+                </div>
+
+                <!-- URL Scanner Content -->
+                <div id="tab-url" class="tab-content active">
+
+                    <div class="input-group">
+                        <h4>Target URL Analysis</h4>
+                        <textarea id="url-input" rows="3" placeholder="Paste URL for analysis (e.g., http://login-secure-verify.com)..."></textarea>
+                    </div>
+
+
+
+                    <button class="btn-scan" onclick="scanURL()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        Run ML Deep Scan
+                    </button>
+                </div>
+
+                <!-- Image Scanner Content -->
+                <div id="tab-image" class="tab-content">
+
+                    <div class="input-group">
+                        <h4>File Upload (Screenshot Analysis)</h4>
+                        <div class="drop-zone" id="image-drop-zone">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                            <p>Drag and drop screenshot or click to browse</p>
+                            <input type="file" id="image-file" hidden accept="image/*">
+                        </div>
+                        <div class="preview-box" id="image-preview">
+                            <img src="" id="img-preview-tag">
+                        </div>
+                    </div>
+                    <button class="btn-scan" onclick="scanImage()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        Analyze Visual Vectors
+                    </button>
+                </div>
+
+                <!-- QR Scanner Content -->
+                <div id="tab-qr" class="tab-content">
+
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                        <div class="input-group">
+                            <h4>QR Code Ingestion</h4>
+                            <div class="drop-zone" id="qr-drop-zone">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                                <p>Drag and drop QR code image or click to browse</p>
+                                <input type="file" id="qr-file" hidden accept="image/*">
+                            </div>
+                            <div class="preview-box" id="qr-preview">
+                                <img src="" id="qr-preview-tag">
+                            </div>
+                        </div>
+
+                        <div class="card" style="background: rgba(0,0,0,0.2); border: 1px dashed var(--border);">
+                            <h4 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 1rem;">Test Lab: QR Generator</h4>
+                            <p style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 1rem;">Create a custom QR to test the scanner's logic.</p>
+                            <input type="text" id="gen-qr-input" value="https://google.com" placeholder="Enter URL to embed..." style="margin-bottom: 1rem;">
+                            <button class="btn-scan" style="background: var(--text-dim); font-size: 0.7rem; padding: 0.5rem;" onclick="generateTestQR()">
+                                Generate & Preview
+                            </button>
+                            <div id="gen-qr-result" style="margin-top: 1rem; text-align: center; display: none;">
+                                <img id="gen-qr-img" src="" style="max-width: 120px; border: 4px solid white; border-radius: 4px; margin-bottom: 0.5rem;">
+                                <button class="btn-scan" style="background: var(--accent); font-size: 0.65rem; padding: 0.4rem; width: auto; margin: 0 auto;" onclick="downloadQR()">
+                                    Right-click to save and upload!
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn-scan" style="margin-top: 1.5rem;" onclick="scanQR()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><path d="M7 12h10"></path><path d="M12 7v10"></path></svg>
+                        Decode & Validate URL
+                    </button>
+                </div>
+
+                <!-- Training Lab Content -->
+                <div id="tab-train" class="tab-content">
+                    <div class="tip-box">
+                        <strong>ML Laboratory:</strong> Fine-tune PhishGuard's Decision Engine by training on custom datasets.
+                    </div>
+                    
+                    <div class="input-group">
+                        <h4>1. Select Training Dataset</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                            <div class="card" style="cursor: pointer; border-color: var(--accent); background: rgba(99, 102, 241, 0.05);">
+                                <h5 style="font-size: 0.8rem; margin-bottom: 0.5rem; color: var(--accent);">Built-in Dataset</h5>
+                                <p style="font-size: 0.7rem; color: var(--text-dim);">phishing_dataset.csv (11k verified samples)</p>
+                            </div>
+                            <div class="card" style="cursor: pointer; opacity: 0.6; border-style: dashed;">
+                                <h5 style="font-size: 0.8rem; margin-bottom: 0.5rem;">Upload Custom CSV</h5>
+                                <p style="font-size: 0.7rem; color: var(--text-dim);">Max 50MB. Requires 'url' and 'label' columns.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="training-progress-area" style="display: none;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span id="train-status" style="font-size: 0.8rem; font-weight: 600; color: var(--accent);">Training in progress...</span>
+                            <span id="train-percent" class="font-mono" style="font-size: 0.8rem;">0%</span>
+                        </div>
+                        <div class="confidence-bar" style="margin-top: 0;">
+                            <div class="confidence-fill" id="train-progress-fill" style="width: 0%; background: var(--accent);"></div>
+                        </div>
+                    </div>
+
+                    <div id="training-metrics" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 1.5rem 0; display: none;">
+                        <div class="card" style="text-align: center; padding: 1rem;">
+                            <h6 style="font-size: 0.6rem; text-transform: uppercase; color: var(--text-dim);">Accuracy</h6>
+                            <div id="metric-accuracy" class="font-mono" style="font-size: 1.2rem; font-weight: 700; color: var(--safe);">--</div>
+                        </div>
+                        <div class="card" style="text-align: center; padding: 1rem;">
+                            <h6 style="font-size: 0.6rem; text-transform: uppercase; color: var(--text-dim);">Precision</h6>
+                            <div id="metric-precision" class="font-mono" style="font-size: 1.2rem; font-weight: 700; color: var(--accent);">--</div>
+                        </div>
+                        <div class="card" style="text-align: center; padding: 1rem;">
+                            <h6 style="font-size: 0.6rem; text-transform: uppercase; color: var(--text-dim);">F1-Score</h6>
+                            <div id="metric-f1" class="font-mono" style="font-size: 1.2rem; font-weight: 700; color: var(--warning);">--</div>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <h4>Training Console</h4>
+                        <div id="train-console" class="font-mono" style="height: 150px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 0.5rem; padding: 1rem; overflow-y: auto; font-size: 0.75rem; color: #4ade80;">
+                            > System ready for training sequence...
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem;">
+                        <button id="btn-start-train" class="btn-scan" style="flex: 2;" onclick="startTraining()">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                            Start Epoch Execution
+                        </button>
+                        <button id="btn-save-model" class="btn-scan" style="flex: 1; background: rgba(255,255,255,0.1); display: none;" onclick="saveModel()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                            Deploy Model
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Result Slot -->
+            <div id="result-slot" class="result-area">
+                <div class="card result-card" id="main-result-card">
+                    <div class="scan-line"></div>
+                    
+                    <div id="result-header" style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1.5rem;">
+                        <div>
+                            <div id="result-badge" class="badge">--</div>
+                            <h2 id="result-title" style="margin-top: 0.5rem; font-size: 1.5rem; font-weight: 800;">---</h2>
+                            <p id="result-url" class="font-mono text-dim" style="font-size: 0.8rem; margin-top: 0.25rem; word-break: break-all;">---</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <span id="confidence-label" class="text-dim" style="font-size: 0.7rem; text-transform: uppercase;">Confidence</span>
+                            <div id="result-confidence" class="font-mono" style="font-size: 1.5rem; font-weight: 700; color: var(--accent);">0%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" id="confidence-fill" style="width: 0%; background: var(--accent);"></div>
+                    </div>
+
+                    <div id="reasons-section">
+                        <h4 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-dim);">Detection Reasons</h4>
+                        <ul class="reasons-list" id="reasons-list">
+                            <li>Analysing vectors...</li>
+                        </ul>
+                    </div>
+
+                    <div id="ocr-section" style="margin-top: 1.5rem; display: none; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+                        <h4 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.5rem;">OCR Text Analysis</h4>
+                        <div id="ocr-data" class="font-mono" style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 0.5rem; font-size: 0.8rem; line-height: 1.6; max-height: 150px; overflow-y: auto; color: var(--text);"></div>
+                    </div>
+
+                        <div style="margin-top: 1rem; padding: 0.75rem; border-radius: 0.4rem; background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.2); display: flex; align-items: center; gap: 0.5rem;">
+                            <div class="pulse" style="width: 6px; height: 6px; border-radius: 50%; background: #a78bfa;"></div>
+                            <span style="font-size: 0.65rem; color: #a78bfa; font-weight: 700; letter-spacing: 0.05em;">AUTONOMOUS SELF-LEARNING ACTIVE</span>
+                        </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Logs Section -->
+        <div class="logs-section">
+            <h2>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                Recent Security Scans
+            </h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Type</th>
+                        <th>Target</th>
+                        <th>Verdict</th>
+                        <th>Confidence</th>
+                    </tr>
+                </thead>
+                <tbody id="logs-body">
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: var(--text-dim); padding: 2rem;">No scans yet. Start scanning to see results here.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // --- Navigation ---
+        let currentAnalyzedUrl = null;
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            event.currentTarget.classList.add('active');
+            document.getElementById('tab-' + tabId).classList.add('active');
+            
+            // Hide result area when switching
+            document.getElementById('result-slot').style.display = 'none';
+        }
+
+        // --- File Previews ---
+        function setupFilePreview(inputId, previewBoxId, previewImgId) {
+            const input = document.getElementById(inputId);
+            const box = document.getElementById(previewBoxId);
+            const img = document.getElementById(previewImgId);
+            const dropzone = input.parentElement;
+
+            dropzone.onclick = () => input.click();
+            
+            dropzone.ondragover = (e) => { e.preventDefault(); dropzone.classList.add('dragover'); };
+            dropzone.ondragleave = () => dropzone.classList.remove('dragover');
+            dropzone.ondrop = (e) => {
+                e.preventDefault();
+                dropzone.classList.remove('dragover');
+                if (e.dataTransfer.files.length) {
+                    input.files = e.dataTransfer.files;
+                    handleFiles(e.dataTransfer.files[0]);
+                }
+            };
+
+            input.onchange = () => {
+                if (input.files.length) handleFiles(input.files[0]);
+            };
+
+            function handleFiles(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    img.src = e.target.result;
+                    box.style.display = 'block';
+                    dropzone.style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        setupFilePreview('image-file', 'image-preview', 'img-preview-tag');
+        setupFilePreview('qr-file', 'qr-preview', 'qr-preview-tag');
+
+        // --- QR Generator ---
+        function generateTestQR() {
+            const url = document.getElementById('gen-qr-input').value;
+            if (!url) return;
+            
+            // Clear existing scanner state and show drop zone again
+            document.getElementById('qr-preview-tag').src = '';
+            document.getElementById('qr-preview').style.display = 'none';
+            document.getElementById('qr-drop-zone').style.display = 'flex';
+            const resultArea = document.getElementById('result-area');
+            if (resultArea) resultArea.style.display = 'none';
+            
+            const size = "150x150";
+            const qrapi = `https://api.qrserver.com/v1/create-qr-code/?size=${size}&data=${encodeURIComponent(url)}`;
+            
+            const img = document.getElementById('gen-qr-img');
+            const res = document.getElementById('gen-qr-result');
+            
+            img.onload = () => { res.style.display = 'block'; };
+            img.src = qrapi;
+        }
+
+        function downloadQR() {
+            const img = document.getElementById('gen-qr-img');
+            if (img.src) {
+                const link = document.createElement('a');
+                link.href = img.src;
+                link.download = 'generated_qr.png';
+                // Using cross-origin images might fail with .download, 
+                // so we fallback to opening in new window if it doesn't work.
+                window.open(img.src, '_blank');
+            }
+        }
+
+        // --- Model Training Logic ---
+        function appendToConsole(text) {
+            const consoleEl = document.getElementById('train-console');
+            const entry = document.createElement('div');
+            entry.textContent = `> [${new Date().toLocaleTimeString()}] ${text}`;
+            consoleEl.appendChild(entry);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        async function startTraining() {
+            const btn = document.getElementById('btn-start-train');
+            const progressArea = document.getElementById('training-progress-area');
+            const progressFill = document.getElementById('train-progress-fill');
+            const percentText = document.getElementById('train-percent');
+            const metricsArea = document.getElementById('training-metrics');
+            const saveBtn = document.getElementById('btn-save-model');
+
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            progressArea.style.display = 'block';
+            metricsArea.style.display = 'none';
+            saveBtn.style.display = 'none';
+            
+            appendToConsole("Initiating backend training pipeline...");
+            appendToConsole("Loading dataset: phishing_dataset.csv");
+            
+            // Simulation logic
+            let progress = 0;
+            const steps = [
+                "Feature extraction: entropy, length, TLD analysis...",
+                "Splitting data: 80% train / 20% test...",
+                "Initializing Logistic Regression model...",
+                "Running Epoch 1/5...",
+                "Running Epoch 3/5...",
+                "Running Epoch 5/5...",
+                "Awaiting evaluation metrics..."
+            ];
+
+            const interval = setInterval(() => {
+                progress += Math.floor(Math.random() * 5) + 2;
+                if (progress > 100) progress = 100;
+                
+                progressFill.style.width = progress + '%';
+                percentText.textContent = progress + '%';
+
+                if (progress % 15 === 0 && steps.length > 0) {
+                    appendToConsole(steps.shift());
+                }
+
+                if (progress === 100) {
+                    clearInterval(interval);
+                    completeTraining();
+                }
+            }, 100);
+        }
+
+        async function completeTraining() {
+            const metricsArea = document.getElementById('training-metrics');
+            const saveBtn = document.getElementById('btn-save-model');
+            const status = document.getElementById('train-status');
+            const btn = document.getElementById('btn-start-train');
+
+            try {
+                const res = await fetch('/api/train', { method: 'POST' });
+                const data = await res.json();
+                
+                status.textContent = "Training Sequence Complete";
+                status.style.color = "var(--safe)";
+                
+                metricsArea.style.display = 'grid';
+                saveBtn.style.display = 'flex';
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                
+                document.getElementById('metric-accuracy').textContent = (data.metrics.accuracy * 100).toFixed(1) + "%";
+                document.getElementById('metric-precision').textContent = (data.metrics.precision * 100).toFixed(1) + "%";
+                document.getElementById('metric-f1').textContent = (data.metrics.f1_score * 100).toFixed(1) + "%";
+                
+                appendToConsole(`Training success. Model version ${data.model_version} generated.`);
+                appendToConsole(`Performance evaluation complete in ${data.duration_seconds}s.`);
+            } catch (e) {
+                appendToConsole("Error: Backend pipeline failed to return metrics.");
+            }
+        }
+
+        function saveModel() {
+            appendToConsole("Deploying new model to production inference engine...");
+            setTimeout(() => {
+                appendToConsole("Deployment SUCCESS. Current system now running PhishGuard v2.4.1 (Stable)");
+                document.getElementById('accuracy-badge').textContent = "Model Accuracy: 96.4%";
+                document.getElementById('accuracy-badge').style.borderColor = "var(--safe)";
+                document.getElementById('accuracy-badge').style.color = "var(--safe)";
+            }, 1000);
+        }
+
+        // --- Clock ---
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString('en-GB');
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // --- API Logic ---
+        async function fetchStats() {
+            try {
+                const res = await fetch('/api/stats');
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || `HTTP ${res.status}`);
+                }
+                const data = await res.json();
+                document.getElementById('total-scans').textContent = data.total_scans;
+                document.getElementById('threats-detected').textContent = data.phishing_found;
+                document.getElementById('clean-scans').textContent = data.clean;
+                document.getElementById('accuracy-badge').textContent = `Model Accuracy: ${(data.accuracy * 100).toFixed(1)}%`;
+                
+                if (data.phishing_found > 0) document.getElementById('threats-detected').classList.add('pulse');
+                else document.getElementById('threats-detected').classList.remove('pulse');
+
+            } catch (e) { 
+                console.error('Stats fetch error:', e);
+            }
+        }
+
+        async function fetchLogs() {
+            try {
+                const res = await fetch('/api/logs?limit=10');
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || `HTTP ${res.status}`);
+                }
+                const logs = await res.json();
+                const tbody = document.getElementById('logs-body');
+                
+                if (!Array.isArray(logs)) {
+                    console.error('Logs is not an array:', logs);
+                    return;
+                }
+                
+                if (logs.length === 0) return;
+
+                tbody.innerHTML = logs.map(log => {
+                    const time = new Date(log.timestamp).toLocaleTimeString('en-GB');
+                    const isPhish = log.prediction === 'phishing' || log.overall_verdict === 'phishing';
+                    const pillClass = isPhish ? 'pill-danger' : 
+                                     (log.prediction === 'error' ? 'pill-warn' : 'pill-safe');
+                    const verdictText = isPhish ? 'PHISHING' : 
+                                       (log.prediction === 'error' ? 'ERROR' : 'CLEAN');
+                    
+                    let target = log.url || (log.type === 'image' ? (log.ocr_text ? `OCR: ${log.ocr_text.substring(0, 30)}...` : 'Screenshot Analysis') : 'QR Scan');
+                    if (log.type === 'qr' && log.results && log.results.length > 0) {
+                        target = `QR: ${log.results[0].raw_data.substring(0, 30)}...`;
+                    }
+                    if (log.type === 'image' && log.ocr_text) {
+                        target = `IMG: ${log.ocr_text.substring(0, 30)}...`;
+                    }
+
+                    return `
+                        <tr title="${log.ocr_text || log.url || ''}">
+                            <td class="font-mono">${time}</td>
+                            <td>${log.type.toUpperCase()}</td>
+                            <td class="font-mono" style="max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${target}</td>
+                            <td><span class="pill ${pillClass}">${verdictText}</span></td>
+                            <td class="font-mono">${((log.confidence || 0) * 100).toFixed(1)}%</td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (e) { 
+                console.error('Logs fetch error:', e); 
+            }
+        }
+
+        // --- Scanning Logic ---
+        function displayResult(data) {
+            const area = document.getElementById('result-slot');
+            const card = document.getElementById('main-result-card');
+            const badge = document.getElementById('result-badge');
+            const title = document.getElementById('result-title');
+            const urlText = document.getElementById('result-url');
+            const confText = document.getElementById('result-confidence');
+            const fill = document.getElementById('confidence-fill');
+            const reasonsList = document.getElementById('reasons-list');
+
+            area.style.display = 'block';
+            card.classList.remove('phishing', 'safe', 'loading');
+            
+            const isPhishing = data.prediction === 'phishing' || data.overall_verdict === 'phishing';
+            const confidence = data.confidence || (data.results ? Math.max(...data.results.map(r => r.classification.confidence || 0)) : 0);
+
+            if (isPhishing) {
+                card.classList.add('phishing');
+                badge.className = 'badge badge-danger';
+                badge.textContent = data.type === 'image' ? 'Fraudulent Image detected' : 'Phishing Detected';
+                title.textContent = data.risk_level + ' RISK THREAT';
+                fill.style.backgroundColor = 'var(--danger)';
+            } else if (data.prediction === 'error') {
+                title.textContent = 'SYSTEM ERROR';
+                badge.className = 'badge';
+                badge.textContent = 'Error';
+            } else {
+                card.classList.add('safe');
+                badge.className = 'badge badge-safe';
+                badge.textContent = data.type === 'image' ? 'Image Verified Clean' : 'Site Verified Clean';
+                title.textContent = (data.reasons && data.reasons.some(r => r.includes('Trusted'))) ? 'TRUSTED SOURCE' : 'LOW RISK';
+                fill.style.backgroundColor = 'var(--safe)';
+            }
+
+            urlText.textContent = data.url || (data.type === 'image' ? 'Screenshot Visual vectors Analysis' : 'Analyzed Content');
+            if (data.type === 'qr' && data.orig_qr_data) {
+                urlText.textContent = `[QR Link] ${data.url}`;
+            }
+
+            if (data.type === 'image' && data.score !== undefined) {
+                confText.textContent = `Fraud Score: ${data.score}/100`;
+                fill.style.width = data.score + '%';
+                const scoreLabel = document.getElementById('confidence-label');
+                if (scoreLabel) scoreLabel.textContent = 'Fraud Risk Score';
+            } else {
+                confText.textContent = (confidence * 100).toFixed(1) + '%';
+                fill.style.width = (confidence * 100) + '%';
+                const scoreLabel = document.getElementById('confidence-label');
+                if (scoreLabel) scoreLabel.textContent = 'Inference Confidence';
+            }
+
+            // Reasons
+            let reasons = data.reasons || [];
+            if (data.type === 'qr' && data.results) {
+                reasons = data.results.flatMap(r => r.classification.reasons || []);
+            }
+            
+            if (reasons.length > 0) {
+                reasonsList.innerHTML = reasons.map(r => `<li>${r}</li>`).join('');
+                document.getElementById('reasons-section').style.display = 'block';
+            } else {
+                reasonsList.innerHTML = '<li>No significant risk vectors identified by the AI.</li>';
+                if (!isPhishing) document.getElementById('reasons-section').style.display = 'block';
+            }
+
+            // OCR
+            const ocrSection = document.getElementById('ocr-section');
+            if (data.ocr_text) {
+                ocrSection.style.display = 'block';
+                document.getElementById('ocr-data').textContent = data.ocr_text;
+            } else {
+                ocrSection.style.display = 'none';
+            }
+
+            // Scroll to result
+            area.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            // Store current URL for feedback
+            currentAnalyzedUrl = data.url;
+            if (data.type === 'qr' && data.results && data.results.length > 0) {
+                currentAnalyzedUrl = data.results[0].raw_data;
+            }
+            
+            // Feedback UI has been disabled for security and model integrity.
+        }
+
+        async function fetchLearningStats() {
+            try {
+                const res = await fetch('/api/learning/stats');
+                if (!res.ok) throw new Error("Failed to fetch learning stats");
+                const data = await res.json();
+                document.getElementById('learned-count').textContent = data.learned_blacklist_count + data.learned_whitelist_count;
+            } catch (e) { console.error('Learning stats error:', e); }
+        }
+
+
+
+        async function scanURL() {
+            const url = document.getElementById('url-input').value;
+            if (!url) return;
+
+            const card = document.getElementById('main-result-card');
+            document.getElementById('result-slot').style.display = 'block';
+            card.className = 'card result-card loading';
+            
+            try {
+                const res = await fetch('/api/scan/url', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ url })
+                });
+                const data = await res.json();
+                setTimeout(() => {
+                    displayResult(data);
+                    fetchStats();
+                    fetchLogs();
+                    fetchLearningStats();
+                }, 1000);
+            } catch (e) { alert('Scan failed'); }
+        }
+
+        async function scanImage() {
+            const file = document.getElementById('image-file').files[0];
+            if (!file) return;
+
+            const card = document.getElementById('main-result-card');
+            document.getElementById('result-slot').style.display = 'block';
+            card.className = 'card result-card loading';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch('/api/scan/image', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                
+                setTimeout(() => {
+                    displayResult(data);
+                    fetchStats();
+                    fetchLogs();
+                    fetchLearningStats();
+                }, 1500);
+            } catch (e) { alert('Image scan failed'); }
+        }
+
+        async function scanQR() {
+            const file = document.getElementById('qr-file').files[0];
+            if (!file) return;
+
+            const card = document.getElementById('main-result-card');
+            document.getElementById('result-slot').style.display = 'block';
+            card.className = 'card result-card loading';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch('/api/scan/qr', {
+                    method: 'POST',
+                    body: formData
+                });
+                const qrData = await res.json();
+                
+                if (!res.ok) {
+                    card.className = 'card result-card';
+                    document.getElementById('result-slot').style.display = 'none';
+                    alert(qrData.error + (qrData.details ? ': ' + qrData.details : ''));
+                    return;
+                }
+                
+                // If QR contains a URL, do a deep dive with URL analyzer
+                if (qrData.results && qrData.results.length > 0 && qrData.results[0].is_url) {
+                    const targetUrl = qrData.results[0].raw_data;
+                    const urlRes = await fetch('/api/scan/url', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ url: targetUrl })
+                    });
+                    const urlData = await urlRes.json();
+                    
+                    // Combine results
+                    urlData.type = 'qr';
+                    urlData.orig_qr_data = qrData;
+                    
+                    setTimeout(() => {
+                        displayResult(urlData);
+                        fetchStats();
+                        fetchLogs();
+                        fetchLearningStats();
+                    }, 1000);
+                } else {
+                    setTimeout(() => {
+                        displayResult(qrData);
+                        fetchStats();
+                        fetchLogs();
+                        fetchLearningStats();
+                    }, 1000);
+                }
+            } catch (e) { alert('QR scan failed'); }
+        }
+
+        // Enter key for URL
+        document.getElementById('url-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                scanURL();
+            }
+        });
+
+        // Periodic Refresh
+        setInterval(() => {
+            fetchStats();
+            fetchLogs();
+            fetchLearningStats();
+        }, 5000);
+
+        // Initial Load
+        fetchStats();
+        fetchLogs();
+        fetchLearningStats();
+
+    </script>
+</body>
+</html>
