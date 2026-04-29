@@ -1,21 +1,68 @@
+# 🛡️ Phishing Detection AI
 
-</div>
+An AI-powered web application that detects phishing URLs, QR codes, and suspicious content using machine learning and Google Gemini API.
 
-# Run and deploy your AI Studio app
+---
 
-This contains everything you need to run your app locally.
+## 🚀 Features
 
+* 🔍 URL phishing detection
+* 📷 QR code scanning
+* 🧠 AI-based analysis using Gemini
+* 🌐 Web interface (React + Flask backend)
 
-## Run Locally
+---
 
-**Prerequisites:**  Node.js
+## ⚙️ Tech Stack
 
+* Frontend: React / Vite
+* Backend: Python (Flask)
+* AI: Google Gemini API
+* ML Model: Custom trained model
+
+---
+
+## 🔐 Environment Setup
+
+Create a `.env.local` file and add:
+
+```
+GEMINI_API_KEY=your_api_key_here
+```
+
+⚠️ Do NOT upload this file to GitHub
+
+---
+
+## ▶️ Run Locally
 
 1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
-=======
-# Phishing-Detection
->>>>>>> a85bbb370d766c5740a8b278ddd0f03203e755eb
+
+```
+npm install
+```
+
+2. Start frontend:
+
+```
+npm run dev
+```
+
+3. Run backend:
+
+```
+python phishing_detector/run.py
+```
+
+---
+
+## 📌 Project Structure
+
+* `/src` → Frontend
+* `/phishing_detector` → Backend + ML model
+
+---
+
+## 👨‍💻 Author
+
+Prasad N S
